@@ -1,3 +1,9 @@
+library("pcalg")
+library(tidyr)
+library(igraph)
+library("Rgraphviz")
+
+
 data <- read.csv2("T:/2021-10-22_10-03-52_BAGEPI-1086-cortes_study_data_cases.csv")
 
 #renaming columns with difficult names
@@ -17,23 +23,20 @@ data[11][is.na(data[11])] <- 0
 #pas pris les autres car ce sont des dates, ne fonctionne 
 #peut-être pas si l'évènement n'a pas eu lieu
 
-sample_all <- data[, c("fall_dt", "age", "sex", "canton" ,"vacc_status" ,"case_death")]
+sample_all <- data[, c("age", "sex","case_death")]
 
-#ne prendre que 200 valeurs
-sample_200 <- sample_all[c(1:200),]
+#only 200 rows, a subset of our data
+sample_200 <- sample_all[c(1:15000),]
 
-#ne pas prendre les valeurs non définies (NA)
+#drop NA values
 sample<- drop_na(sample_200)
 
-#créer les data
-#matrice : sample (équivalent de "gmG$x" dans l'exemple)
-#graph :à créer
-###################################################
+#age groups: 0-18 ; 18-55; 55 - inf
+sample$age[sample$age < 18] <- 'child'
+sample$age[sample$age > 55] <- 'elderly'
+sample$age[(sample$age > 18) & (sample$age< 55)] <- 'adult'
 
-
-#...
-
-###################################################
+#début du code du tuto
 op.orig <-
   options(SweaveHooks=
             list(fig=function() par(mar=c(5.1, 4.1, 1.1, 2.1))),
@@ -42,32 +45,44 @@ op.orig <-
           prompt = "R> ")
 
 ###################################################
-library("pcalg")
-#data("gmG")
+#conversion de la matrice en numerical values
+
+sample$sex <- xtfrm(select(sample, 'sex')$sex)
+sample$age <- xtfrm(select(sample, 'age')$age)
+
+#y <- select(sample, 'canton')
+#sample$canton <- xtfrm(y$canton)
+
+#sample$fall_dt <- xtfrm(select(sample, 'fall_dt')$fall_dt)
+
+
+#matrice : sample (équivalent de "gmG$x" dans l'exemple)
+#graph : à créer
 ###################################################
-#pour cette étape on a besoin que la x ne soit
-#que composée de chiffres (pas des noms par ex homme ou femme)
+
+graph <- graph_from_data_frame(sample, directed = FALSE, vertices = NULL)
 
 #################
-#convertir la matrice en dummies
+#suffStat1 <- list(C = cor(sample), n = nrow(sample))
+#pag.est <- fci(suffStat1, indepTest = gaussCItest,
+#               p = ncol(sample), alpha = 0.01)
+#par(mfrow = c(1,2))
 
-#...
+#plot(graph, main = "")
+#plot(pag.est)
 
-
-#################
-suffStat1 <- list(C = cor(gmL$x), n = nrow(gmL$x))
-pag.est <- fci(suffStat1, indepTest = gaussCItest,
-               p = ncol(gmL$x), alpha = 0.01, labels = as.character(2:5))
+##################
+#skeleton
+suffStat <- list(dm = as.matrix(sample), adaptDF = FALSE)
+skel.fit <- skeleton(suffStat, indepTest = disCItest,
+                     p = ncol(sample), alpha = 0.01)
 par(mfrow = c(1,2))
+plot(graph, main = "")
+plot(skel.fit, main = "")
 
-#pour la suite, créer le graph qui correspond aux données
-#################
-#créer le graphe
-
-#...
-
-
-#################
-
-plot(gmL$g, main = "")
-plot(pag.est)
+#fci fit
+fci.fit <- fci(suffStat, indepTest = disCItest,
+             p = ncol(sample), alpha = 0.01)
+par(mfrow = c(1,2))
+plot(graph, main = "graph")
+plot(fci.fit, main = "fci fit")
