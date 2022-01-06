@@ -75,21 +75,23 @@ sir_age_model <- function(time, state, parameters) {
 #Faire une moyenne des taux de vaccinations ...
 #...sur un échantillon des jours
 
+#Pour trouver le vaccination coverage for each age group: nb fully vaccinated by age group / total number of people in the age group
 
 #Repartition between age groups:
 #nombre de fully vaccinated people by age groupe : https://www.covid19.admin.ch/en/vaccination/persons?ageGroupClass=vaccStrategy&demoSum=total&vaccPersonsRel=abs
 #0-15 ; 16-64 ; >65
 
-#purcentage obtained with https://www.bfs.admin.ch/bfs/fr/home/statistiques/population/effectif-evolution/age-etat-civil-nationalite.assetdetail.18264546.html
+#purcentage of population for each age group obtained with https://www.bfs.admin.ch/bfs/fr/home/statistiques/population/effectif-evolution/age-etat-civil-nationalite.assetdetail.18264546.html
 #(moyenne entre sexes)
-#pas exactement la même tranche d'âge (20-65 au lieu de 18-65)
-#pop suisse: 8670300 (https://www.bfs.admin.ch/bfs/fr/home/statistiques/population.html)
+#pas exactement la même tranche d'âge (20-65 au lieu de 18-65 dans le modèle, et 16-65 dans les stats vaccination)
+#pop suisse totale: 8670300 (https://www.bfs.admin.ch/bfs/fr/home/statistiques/population.html)
 
-#au 31.12.2020: +65 ans : 18,8% -> ~1630016,4
-#20-64 ans : 61,3% -> ~5314893,9
-#<20 ans : 19,9% -> ~1725389,7
+#au 31.12.2020: +65 ans : 18,8% de la population -> ~1630016,4 personnes
+#20-64 ans : 61,3% de la population -> ~5314893,9 personnes
+#<20 ans : 19,9% de la population -> ~1725389,7 personnes
 
-#donc vaccine coverage (nb fully vacc / nb total age group)
+#donc: vaccine coverage (nb fully vacc / nb total age group)
+#pas les mêmes chiffres pour chaque date. J'ai commencé avec le 15 août, la moitié de la période étudiée.
 #04.07
 #elder: 1317088/1630016,4
 #adults : 2104756/5314893,9
@@ -126,9 +128,9 @@ N3 <- 0.15*N
 initial_state_values <- c(S1 = N1-p1*N1,
                           S2 = N2-p2*N2,  
                           S3 = N3-p3*N3,
-                          I1 = 1,        # the outbreak starts with 1 infected person (can be of either age) 
-                          I2 = 0,
-                          I3 = 0,
+                          I1 = 13067,        # the outbreak starts with 1 infected person (can be of either age) 
+                          I2 = 628472,
+                          I3 = 26378,
                           R1 = p1*N1,
                           R2 = p2*N2,   
                           R3 = p3*N3)
@@ -146,3 +148,5 @@ results1 <- data.frame(child_cum_inc = output$S1[1]-output$S1[nrow(output)],
                        total_cum_inc = sum(output[1,c("S1", "S2", "S3")])-sum(output[nrow(output),c("S1", "S2", "S3")]))
 print(results1)
 # works until there ########################################
+model_cumulative <- cumsum(output[c("I1")] + output[c("I2")] + output[c("I3")])
+plot.default(model_cumulative)
