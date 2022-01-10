@@ -23,7 +23,8 @@ contact_matrix[3,3] = 2     # daily number of contacts that elderly people make 
 # The contact_matrix now looks exactly like the one in the etivity instructions. We add this matrix as a parameter below.
 
 # Parameters
-parameters <- c(b = 0.05,     # the probability of infection per contact is 5%
+# initial b 0.05
+parameters <- c(b = 0.0060,     # the probability of infection per contact is 5%
                 contact_matrix = contact_matrix,   # the age-specific average number of daily contacts (defined above)
                 gamma = 1/5)  # the rate of recovery is 1/5 per day
 
@@ -48,16 +49,26 @@ sir_age_model <- function(time, state, parameters) {
     
     # Defining the force of infection
     
-    # Force of infection acting on susceptible children
-    lambda <- b * contact_matrix %*% as.matrix(I/N) 
+    # Force of infection acting on susceptible individuals
+    lambda <- b * contact_matrix %*% as.matrix(I/N)
     # %*% is used to multiply matrices in R
     # the lambda vector contains the forces of infection for children, adults and the elderly (length 3)
     
     # The differential equations
     # Rate of change in children:
-    dS <- -lambda * S             
-    dI <- lambda * S - gamma * I
+    #dS <- -lambda^(2) * S
+    dS <- S^(lambda)
+    #dS <- -lambda^3 * S
+    #dS <- (log(lambda))*S 
+    
+    dI <- -dS - gamma * I
+    #dI <- log(lambda*S)  - gamma * I
+    #dI <- lambda^3 * S - gamma * I
+    
+    
+    #dR <- gamma * I
     dR <- gamma * I
+    
     
     # Output
     return(list(c(dS, dI, dR))) 
@@ -125,12 +136,28 @@ N2 <- 0.65*N
 N3 <- 0.15*N
 
 # Fill in initial state values for a naive population based on effective vaccine coverage:
+
+# Initial state values : based on number of infected people
+# on the 1st of July (https://www.covid19.admin.ch/fr/epidemiologic/case?rel=abs)
+# < 20: 237 infected in Switzerland. 
+I1_0107_CH <- 237
+# 20-64: 758
+I2_0107_CH <- 758
+# > 64: 45
+I3_0107_CH <- 45
+# On N people : N_infected_age_group*N_total/N_pop_suisse
+N_suisse <- 8637000
+I1_0107 <- I1_0107_CH*N/N_suisse
+I2_0107 <- I2_0107_CH*N/N_suisse
+I3_0107 <- I3_0107_CH*N/N_suisse
+
+
 initial_state_values <- c(S1 = N1-p1*N1,
                           S2 = N2-p2*N2,  
                           S3 = N3-p3*N3,
-                          I1 = 13067,        # the outbreak starts with 1 infected person (can be of either age) 
-                          I2 = 628472,
-                          I3 = 26378,
+                          I1 = I1_0107,        # the outbreak starts with 1 infected person (can be of either age) 
+                          I2 = I2_0107,
+                          I3 = I3_0107,
                           R1 = p1*N1,
                           R2 = p2*N2,   
                           R3 = p3*N3)
@@ -149,4 +176,4 @@ results1 <- data.frame(child_cum_inc = output$S1[1]-output$S1[nrow(output)],
 print(results1)
 # works until there ########################################
 model_cumulative <- cumsum(output[c("I1")] + output[c("I2")] + output[c("I3")])
-plot.default(model_cumulative)
+plot.default(model_cumulative, type = 'l' ,col="green", xlab = 'time', ylab = 'cumulative number of cases of the model')
