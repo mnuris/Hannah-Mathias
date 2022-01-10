@@ -18,6 +18,6 @@ model_cumulative <- cumsum(output[c("I1")] + output[c("I2")] + output[c("I3")])
 
 #plot les deux courbes l'une sur l'autre
 #je fais une fausse deuxième courbe pour faire un essai de plot
-plot(confirmed_google_norm  + 120.4122,type="l",col="red", xlab = 'time', ylab = 'cumulative Covid-19 cases number')
+plot(confirmed_google_norm  + 120.4122,type="l",col="red", xlab = 'days since start of simulation - period: 01.07.2021 to 01.10.2021', ylab = 'cumulative Covid-19 cases number')
 lines(model_cumulative + 1525,col="green")
 legend(x = 'bottomright', legend = c("SIR model", "Google data"), text.col = c("green4", "red"), trace = TRUE)

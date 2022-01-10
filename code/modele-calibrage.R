@@ -57,7 +57,7 @@ sir_age_model <- function(time, state, parameters) {
     # The differential equations
     # Rate of change in children:
     #dS <- -lambda^(2) * S
-    dS <- S^(lambda)
+    dS <- -lambda*S
     #dS <- -lambda^3 * S
     #dS <- (log(lambda))*S 
     
